@@ -29,12 +29,16 @@ def load_data():
     connection_file='Data/relation/NASDAQ_connections.json'
     tic_wiki_file='Data/relation/NASDAQ_wiki.csv' 
     sel_path_file='Data/relation/selected_wiki_connections.csv'
-
+    valid_company_file = 'Data/valid_company.txt'
+    with open(valid_company_file, 'r') as f:
+        valid_company_list = f.readlines()
+        valid_company_list = [valid_company.replace('\n', '') for valid_company in valid_company_list ]
     # readin tickers => col1: abbreviation, col2: wikidata index 
     idx_labels = np.genfromtxt(tic_wiki_file, dtype=str, delimiter=',',
                             skip_header=False)
+    
     # build graph   
-    idx_map = {j[1]: i for i, j in enumerate(idx_labels) if j[1] != 'unknown'}
+    idx_map = {j[1]: i for i, j in enumerate(idx_labels) if j[1] != 'unknown' and j[0] in valid_company_list}
 
 
     # readin selected paths/connections
@@ -50,11 +54,12 @@ def load_data():
     edges_unordered = []
     for key1, conns in connections.items():
         for key2, paths in conns.items():
-            for p in paths:
-                path_key = '_'.join(p)
-                if path_key in sel_paths:
-                    edges_unordered.append([key1, key2])
-                    continue
+            if key1 in valid_company_list and key2 in valid_company_file:
+                for p in paths:
+                    path_key = '_'.join(p)
+                    if path_key in sel_paths:
+                        edges_unordered.append([key1, key2])
+                        continue
 
     edges_unordered = np.array(edges_unordered)
     edges = np.array(list(map(idx_map.get, edges_unordered.flatten()))).reshape(edges_unordered.shape)
@@ -64,6 +69,7 @@ def load_data():
     adj = normalize_adj(adj + sp.eye(adj.shape[0]))
     adj = torch.FloatTensor(np.array(adj.todense()))
     return adj
+    
 
 def normalize_adj(mx):
     """Row-normalize sparse matrix"""
