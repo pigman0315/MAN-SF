@@ -31,7 +31,7 @@ def load_data():
     # connection_file='Data/relation/NYSE_connections.json'
     # tic_wiki_file='Data/relation/NYSE_wiki.csv' 
     sel_path_file='Data/relation/selected_wiki_connections.csv'
-    valid_company_file = 'Data/valid_company.txt'
+    valid_company_file = './valid_company.txt'
     with open(valid_company_file, 'r') as f:
         valid_company_list = f.readlines()
         valid_company_list = [valid_company.replace('\n', '') for valid_company in valid_company_list ]

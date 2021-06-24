@@ -1,0 +1,3 @@
+Stock_num 每天可能不一樣，要改一下
+Price data: (公司數=?,天數=5，price種類=3) NOTICE: 有需要同一天嗎?
+Tweet data: (公司=?，天數=5，當天Tweet數量=8，USE embed size=512)

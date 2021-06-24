@@ -18,8 +18,8 @@ from sklearn.metrics import matthews_corrcoef, confusion_matrix
 from sklearn.metrics import classification_report
 import pickle
 
-from utils import load_data, accuracy
-from models import GAT, SpGAT
+from utils import load_data, accuracy # load_data: load relaton data
+from models import GAT
 
 # Training settings
 parser = argparse.ArgumentParser()
@@ -45,19 +45,16 @@ torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
-# Load data
+# Load data for GAT
 adj = load_data()
 stock_num = adj.size(0)
 
-train_price_path = "train_price/"
-train_label_path = "train_label/"
-train_text_path = "train_text/"
-val_price_path = "val_price/"
-val_label_path = "val_label/"
-val_text_path = "val_text/"
-test_price_path = "test_price/"
-test_label_path = "test_label/"
-test_text_path = "test_text/"
+train_price_path = "./Data/train_price/"
+train_label_path = "./Data/train_label/"
+train_text_path = "./Data/train_text/"
+test_price_path = "./Data/test_price/"
+test_label_path = "./Data/test_label/"
+test_text_path = "./Data/test_text/"
 num_samples = len(os.listdir(train_price_path))
 import os
 import time
@@ -84,6 +81,7 @@ def train(epoch):
     loss_train = cross_entropy(output, torch.max(train_label,1)[1])
     acc_train = accuracy(output, torch.max(train_label,1)[1])
     loss_train.backward()
+    print("Training loss =",loss_train.item())
     optimizer.step()
 
 def test_dict():
@@ -137,7 +135,7 @@ if args.cuda:
     model.cuda()
     adj = adj.cuda()
 optimizer = optim.Adam(model.parameters(), 
-                   lr=l_r, 
+                   lr=args.lr, 
                    weight_decay=args.weight_decay)
 
 for epoch in range(args.epochs):
