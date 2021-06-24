@@ -83,9 +83,15 @@ for n in range(total_n):
 def get_price_data(dir_path):
     # read raw data
     path = os.path.join(dir_path,"stocknet-dataset","price","raw")
+
+    # ignore some companies
+    ignore_file_list = ["AGFS.csv","BABA.csv","GMRE.csv"]
+
     files_name = os.listdir(path)
     dataset = []
     for fn in files_name:
+        if(fn in ignore_file_list):
+            continue
         last_adj_close = 1
         data = []
         file_path = os.path.join(path,fn)
