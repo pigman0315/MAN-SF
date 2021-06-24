@@ -28,6 +28,8 @@ def load_data():
     print('Loading dataset...')
     connection_file='Data/relation/NASDAQ_connections.json'
     tic_wiki_file='Data/relation/NASDAQ_wiki.csv' 
+    # connection_file='Data/relation/NYSE_connections.json'
+    # tic_wiki_file='Data/relation/NYSE_wiki.csv' 
     sel_path_file='Data/relation/selected_wiki_connections.csv'
     valid_company_file = 'Data/valid_company.txt'
     with open(valid_company_file, 'r') as f:
@@ -54,7 +56,7 @@ def load_data():
     edges_unordered = []
     for key1, conns in connections.items():
         for key2, paths in conns.items():
-            if key1 in valid_company_list and key2 in valid_company_file:
+            if key1 in idx_map.keys() and key2 in idx_map.keys():
                 for p in paths:
                     path_key = '_'.join(p)
                     if path_key in sel_paths:
