@@ -3,11 +3,6 @@ import json
 import numpy as np
 import os
 TWEET_NUM = 8
-
-
-###############################
-# Tweet Preprocessing         #
-###############################
 def concate(input):
     output = ''
     for s in input:
@@ -16,12 +11,25 @@ def concate(input):
             output += ' '
     return output
 
-USE_embed = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
-# embeddings = USE_embed(["The quick brown fox jumps over the lazy dog."]).numpy()[0]
 
-# print(embeddings)
+# create diretory "./Data/raw_data"
+if not os.path.exists("./Data/raw_data"):
+    os.mkdir("./Data/raw_data")
+
+
+###############################
+# Tweet Preprocessing         #
+###############################
+
+# USE embedding method
+USE_embed = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
+
+# Make diretory "./Data/raw_data/tweet"
+if not os.path.exists("./Data/raw_data/tweet"):
+    os.mkdir("./Data/raw_data/tweet")
+
 all_emb_list = []
-align_file = open("./Data/alignment_date_list.txt")
+align_file = open("./alignment_date_list.txt")
 total_n = int(align_file.readline().split("\n")[0])
 for n in range(total_n):
     line = align_file.readline()
@@ -29,13 +37,17 @@ for n in range(total_n):
     line = line.split(' ')
     company = line[0]
     date_total_n = int(line[1])
-    if(date_total_n == 0):
+    if(date_total_n <= 2):
+        for dn in range(date_total_n):
+            l = align_file.readline()
         continue
     #
-    print("=== Company:",company," OK ===")
+    dir_path = "./Data/raw_data/tweet/"+company
+    if not os.path.exists(dir_path):
+        os.mkdir(dir_path)
+
     #
     emb_dict = {}
-    company_emb_list = np.zeros((date_total_n,5,TWEET_NUM,512))
     for date_n in range(date_total_n):
         line = align_file.readline().split("\n")[0]
         line = line.split(',')
@@ -59,17 +71,8 @@ for n in range(total_n):
             else:
                 emb_list = emb_dict[line[i]]
             day_emb_list[i-1] = emb_list
-        company_emb_list[date_n] = day_emb_list
-    all_emb_list.append(company_emb_list)
-tweet_data = all_emb_list[0]
-for i in range(1,len(all_emb_list)):
-    tweet_data = np.concatenate((tweet_data,all_emb_list[i]),axis=0)
-np.save("./Data/tweet",tweet_data)
-
-print("=== Tweet preprocessing finished ===")
-data = np.load("./Data/tweet.npy")
-print("tweet.npy' shape:",data.shape)
-
+        np.save(dir_path+"/"+line[0],day_emb_list)
+    print("=== Company:",company," OK ===")
 
 
 ###############################
@@ -158,39 +161,71 @@ def build_label_dict(n):
         data_dict[date] = label
     return data_dict
 
-align_file = open("./Data/alignment_date_list.txt")
+align_file = open("./alignment_date_list.txt")
 line = align_file.readline().split('\n')[0]
 total_n = int(line)
 
-price_list = []
-label_list = []
+# create diretory "./Data/raw_data/price"
+if not os.path.exists("./Data/raw_data/price"):
+    os.mkdir("./Data/raw_data/price")
+
+# create diretory "./Data/raw_data/label"
+if not os.path.exists("./Data/raw_data/label"):
+    os.mkdir("./Data/raw_data/label")
+
+# 
 for n in range(total_n):
     line = align_file.readline().split('\n')[0]
     line = line.split(' ')
     company = line[0]
-    print("=== Company:",company," OK ===")
     date_n = int(line[1])
-    if(date_n == 0):
+    if(date_n <= 2):
+        for dn in range(date_n):
+            l = align_file.readline()
         continue
+
+    # create directory "./Data/raw_data/price/"+company
+    dir_path_p = "./Data/raw_data/price/"+company
+    if not os.path.exists(dir_path_p):
+        os.mkdir(dir_path_p)
+
+    # create directory "./Data/raw_data/label/"+company
+    dir_path_l = "./Data/raw_data/label/"+company
+    if not os.path.exists(dir_path_l):
+        os.mkdir(dir_path_l)
+    
     date_dict = build_date_dict(n)
     label_dict = build_label_dict(n)
     for _ in range(date_n):
         l = align_file.readline().split('\n')[0]
         l = l.split(',')
         target_date = l[0]
-        #print(target_date)
-        price_list.append(date_dict[target_date])
-        label_list.append(label_dict[target_date])
-#
-price_data = price_list[0].reshape(1,5,3)
-for i in range(1,len(price_list)):
-    price_data = np.concatenate((price_data,price_list[i].reshape(1,5,3)),axis=0)
-label_data = np.array(label_list)
 
-print("=== Price & Label preprocessing finished ===")
-np.save('./Data/price',price_data)
-np.save('./Data/label',label_data)
-a = np.load('./Data/price.npy')
-print("price.npy's shape=",a.shape)
-b = np.load('./Data/label.npy')
-print("label.npy's shape=",b.shape)
+        feature = date_dict[target_date]
+        np.save(dir_path_p+'/'+target_date,feature)
+
+        label = label_dict[target_date]
+        np.save(dir_path_l+'/'+target_date,label)
+    print("=== Company:",company," OK ===")
+
+print("====== Creating raw data is done(check ./Data/raw_data) ======")
+
+
+align_file = open("./alignment_date_list.txt")
+line = align_file.readline().split('\n')[0]
+total_n = int(line)
+file = open("./Data/valid_company.txt",'w')
+for n in range(total_n):
+    line = align_file.readline().split('\n')[0]
+    line = line.split(' ')
+    company = line[0]
+    date_n = int(line[1])
+    for dn in range(date_n):
+        l = align_file.readline()
+    if(date_n <= 2):
+        continue
+    file.write(company+"\n")
+
+print("\r====== Creating valid company list is done(check ./valid_company.txt) ======")
+
+
