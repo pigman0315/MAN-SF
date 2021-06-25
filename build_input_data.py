@@ -18,8 +18,6 @@ def make_dir():
 	if not os.path.exists("./Data/test_label"):
 	    os.mkdir("./Data/test_label")
 
-
-
 # get valid company list
 def get_company_list():
 	company_list = []
@@ -86,9 +84,9 @@ def build_test_data(company_list,data_num,train_rate=0.7):
 		if(i % 200 == 0):
 			print('{i}/{n}'.format(i=i,n=data_num))
 
-TRAIN_SIZE = 10000
+TRAIN_SIZE = 5000
 TRAIN_RATE = 0.7
-TEST_SIZE = 3000
+TEST_SIZE = 1500
 
 # create needed directory
 make_dir()
@@ -97,7 +95,7 @@ make_dir()
 company_list = get_company_list()
 
 # build training data
-#build_train_data(company_list,TRAIN_SIZE,TRAIN_RATE)
+build_train_data(company_list,TRAIN_SIZE,TRAIN_RATE)
 
 # build test data
 build_test_data(company_list,TEST_SIZE,TRAIN_RATE)

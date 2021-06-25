@@ -2,7 +2,9 @@ import tensorflow_hub as hub
 import json
 import numpy as np
 import os
+
 TWEET_NUM = 8
+
 def concate(input):
     output = ''
     for s in input:
@@ -11,22 +13,21 @@ def concate(input):
             output += ' '
     return output
 
-
 # create diretory "./Data/raw_data"
 if not os.path.exists("./Data/raw_data"):
     os.mkdir("./Data/raw_data")
 
 
 ###############################
-# Tweet Preprocessing         #
+#     Tweet Preprocessing     #
 ###############################
 
 # USE embedding method
 USE_embed = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
 
 # Make diretory "./Data/raw_data/tweet"
-if not os.path.exists("./Data/raw_data/tweet"):
-    os.mkdir("./Data/raw_data/tweet")
+if not os.path.exists("./Data/raw_data/text"):
+    os.mkdir("./Data/raw_data/text")
 
 all_emb_list = []
 align_file = open("./alignment_date_list.txt")
@@ -42,7 +43,7 @@ for n in range(total_n):
             l = align_file.readline()
         continue
     #
-    dir_path = "./Data/raw_data/tweet/"+company
+    dir_path = "./Data/raw_data/text/"+company
     if not os.path.exists(dir_path):
         os.mkdir(dir_path)
 
@@ -73,7 +74,7 @@ for n in range(total_n):
             day_emb_list[i-1] = emb_list
         np.save(dir_path+"/"+line[0],day_emb_list)
     print("=== Company:",company," OK ===")
-
+align_file.close()
 
 ###############################
 # Price & Label Preprocessing #
@@ -149,7 +150,6 @@ def get_price_data(dir_path):
 database = get_price_data("./Data")
 assert(len(database) == 85) # need to delete some company in original price data
 
-
 def build_date_dict(n):
     data_dict = {}
     dataset = database[n]
@@ -158,6 +158,7 @@ def build_date_dict(n):
         feature = dataset[i]['feature']
         data_dict[date] = feature
     return data_dict
+    
 def build_label_dict(n):
     data_dict = {}
     dataset = database[n]
@@ -206,21 +207,20 @@ for n in range(total_n):
         l = align_file.readline().split('\n')[0]
         l = l.split(',')
         target_date = l[0]
-
         feature = date_dict[target_date]
         np.save(dir_path_p+'/'+target_date,feature)
 
         label = label_dict[target_date]
         np.save(dir_path_l+'/'+target_date,label)
     print("=== Company:",company," OK ===")
-
+align_file.close()
 print("====== Creating raw data is done(check ./Data/raw_data) ======")
 
 
 align_file = open("./alignment_date_list.txt")
 line = align_file.readline().split('\n')[0]
 total_n = int(line)
-file = open("./Data/valid_company.txt",'w')
+file = open("./valid_company.txt",'w')
 for n in range(total_n):
     line = align_file.readline().split('\n')[0]
     line = line.split(' ')
@@ -231,7 +231,6 @@ for n in range(total_n):
     if(date_n <= 2):
         continue
     file.write(company+"\n")
-
+file.close()
+align_file.close()
 print("\r====== Creating valid company list is done(check ./valid_company.txt) ======")
-
-

@@ -69,49 +69,41 @@ cross_entropy = nn.CrossEntropyLoss(weight=torch.tensor([[1.00,1.00]]).cuda())
 
 
 
-def train(epoch):
+def train(epoch,TRAIN_SIZE):
     t = time.time()
     model.train()
     optimizer.zero_grad()
-    i = np.random.randint(num_samples)
+    i = np.random.randint(TRAIN_SIZE)
     train_text = torch.tensor(np.load(train_text_path+str(i).zfill(10)+'.npy'), dtype=torch.float32).cuda()
     train_price = torch.tensor(np.load(train_price_path+str(i).zfill(10)+'.npy'), dtype = torch.float32).cuda()
     train_label = torch.LongTensor(np.load(train_label_path+str(i).zfill(10)+'.npy')).cuda()
     output = model(train_text, train_price, adj)
-    loss_train = cross_entropy(output, torch.max(train_label,1)[1])
-    acc_train = accuracy(output, torch.max(train_label,1)[1])
+    loss_train = cross_entropy(output, train_label)
+    acc_train = accuracy(output, train_label)
     loss_train.backward()
-    print("Training loss =",loss_train.item())
+    print("Epoch:",epoch,", Training loss =",loss_train.item(),", Accuracy =",acc_train.item())
     optimizer.step()
 
-def test_dict():
-    pred_dict = dict()
-    with open('label_data.p', 'rb') as fp:
-        true_label = pickle.load(fp)
-    with open('price_feature_data.p', 'rb') as fp:
-        feature_data = pickle.load(fp)
-    with open('text_feature_data.p', 'rb') as fp:
-        text_ft_data = pickle.load(fp)
+def test(TEST_SIZE):
     model.eval()
     test_acc = []
     test_loss = []
     li_pred = []
     li_true = []
-    for dates in feature_data.keys():
-        test_text = torch.tensor(text_ft_data[dates],dtype=torch.float32).cuda()
-        test_price = torch.tensor(feature_data[dates],dtype=torch.float32).cuda()
-        test_label = torch.LongTensor(true_label[dates]).cuda()
-        output = model(test_text, test_price,adj)
-        output = F.softmax(output, dim=1)
-        pred_dict[dates] = output.cpu().detach().numpy()
-        loss_test = F.nll_loss(output, torch.max(test_label,1)[0])
-        acc_test = accuracy(output, torch.max(test_label,1)[1])
-        a = torch.max(output,1)[1].cpu().numpy()
-        b = torch.max(test_label,1)[1].cpu().numpy() 
-        li_pred.append(a)
-        li_true.append(b)
-        test_loss.append(loss_test.item())
-        test_acc.append(acc_test.item())
+    with torch.no_grad():
+        for i in range(TEST_SIZE):
+            test_text = torch.tensor(np.load(test_text_path+str(i).zfill(10)+'.npy'), dtype=torch.float32).cuda()
+            test_price = torch.tensor(np.load(test_price_path+str(i).zfill(10)+'.npy'), dtype = torch.float32).cuda()
+            test_label = torch.LongTensor(np.load(test_label_path+str(i).zfill(10)+'.npy')).cuda()
+            output = model(test_text, test_price,adj)
+            loss_test = cross_entropy(output, test_label)
+            acc_test = accuracy(output, test_label)
+            a = output.argmax(1).cpu().numpy()
+            b = test_label.cpu().numpy() 
+            li_pred.append(a)
+            li_true.append(b)
+            test_loss.append(loss_test.item())
+            test_acc.append(acc_test.item())
     iop = f1_score(np.array(li_true).reshape((-1,)),np.array(li_pred).reshape((-1,)), average='micro')
     mat = matthews_corrcoef(np.array(li_true).reshape((-1,)),np.array(li_pred).reshape((-1,)))
     print("Test set results:",
@@ -119,10 +111,6 @@ def test_dict():
           "accuracy= {:.4f}".format(np.array(test_acc).mean()),
           "F1 score={:.4f}".format(iop),
           "MCC = {:.4f}".format(mat))
-    with open('pred_dict.p', 'wb') as fp:
-        pickle.dump(pred_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
-    return iop, mat
-
 
 model = GAT(nfeat=64, 
             nhid=args.hidden, 
@@ -138,7 +126,12 @@ optimizer = optim.Adam(model.parameters(),
                    lr=args.lr, 
                    weight_decay=args.weight_decay)
 
+TRAIN_SIZE = 300
+TEST_SIZE = 90
 for epoch in range(args.epochs):
-    train(epoch) 
+    train(epoch,TRAIN_SIZE) 
+    if(epoch != 0 and epoch % 100 == 0):
+        torch.save(model.state_dict(), "./weight.pth")
+        test(TEST_SIZE)
 print("Optimization Finished!")
-results = test_dict()
+

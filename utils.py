@@ -39,9 +39,12 @@ def load_data():
     idx_labels = np.genfromtxt(tic_wiki_file, dtype=str, delimiter=',',
                             skip_header=False)
     
-    # build graph   
-    idx_map = {j[1]: i for i, j in enumerate(idx_labels) if j[1] != 'unknown' and j[0] in valid_company_list}
-
+    # build graph
+    idx_map = {}
+    for idx in idx_labels:
+        if(idx[1] != 'unknown' and idx[0] in valid_company_list):
+            idx_map[idx[1]] = valid_company_list.index(idx[0])
+            
 
     # readin selected paths/connections
     sel_paths = np.genfromtxt(sel_path_file, dtype=str, delimiter=' ',
@@ -65,9 +68,9 @@ def load_data():
 
     edges_unordered = np.array(edges_unordered)
     edges = np.array(list(map(idx_map.get, edges_unordered.flatten()))).reshape(edges_unordered.shape)
-
-    adj = np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])
-    adj = sp.coo_matrix(adj, dtype=np.float32)
+    
+    adj = np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1]) # data, (row,col)
+    adj = sp.coo_matrix(adj,shape=(48,48), dtype=np.float32) # 48: total company number
     adj = normalize_adj(adj + sp.eye(adj.shape[0]))
     adj = torch.FloatTensor(np.array(adj.todense()))
     return adj
