@@ -39,8 +39,9 @@ def load_data():
     idx_labels = np.genfromtxt(tic_wiki_file, dtype=str, delimiter=',',
                             skip_header=False)
     
+    filterd_idx_labels = [ idx_label for idx_label in idx_labels if idx_label[1] != 'unknown' and idx_label[0] in valid_company_list]
     # build graph   
-    idx_map = {j[1]: i for i, j in enumerate(idx_labels) if j[1] != 'unknown' and j[0] in valid_company_list}
+    idx_map = {j[1]:i for i, j in enumerate(filterd_idx_labels)}
 
 
     # readin selected paths/connections
