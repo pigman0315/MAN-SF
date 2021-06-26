@@ -8,6 +8,5 @@
 
 ## Run
 - First, do data preprocessing, `python data_preprocess.py`
-- Then, build input data for model, `python build_intput_data.py`
-	- This operation might take you a while(~10 minutes)
-- Finally, you can run it by `python train.py`
+	- option `--train_size`
+- After doing date preprocessing, you can run it by `python train.py`
