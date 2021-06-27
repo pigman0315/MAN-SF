@@ -12,6 +12,18 @@ def encode_onehot(labels):
                              dtype=np.int32)
     return labels_onehot
 
+'''
+def load_data():
+    print('Loading dataset...')
+    # adj = np.load('NASDAQ_wiki_relation.npy')
+    adj = np.load('graph.npy')
+    adj = sp.coo_matrix(adj, dtype=np.float32)
+    adj = normalize_adj(adj + sp.eye(adj.shape[0]))
+    adj = torch.FloatTensor(np.array(adj.todense()))
+    return adj
+'''
+# def build_graph(connection_file, tic_wiki_file,
+                        # sel_path_file):
 def load_data():
     print('Loading dataset...')
     # connection_file='Data/relation/NASDAQ_connections.json'
@@ -24,7 +36,7 @@ def load_data():
         valid_company_list = f.readlines()
         valid_company_list = [valid_company.replace('\n', '') for valid_company in valid_company_list ]
     COMPANY_NUM = len(valid_company_list)
-    
+
     # readin tickers => col1: abbreviation, col2: wikidata index 
     idx_labels = np.genfromtxt(tic_wiki_file, dtype=str, delimiter=',',
                             skip_header=False)
@@ -60,7 +72,7 @@ def load_data():
     edges = np.array(list(map(idx_map.get, edges_unordered.flatten()))).reshape(edges_unordered.shape)
     
     adj = np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1]) # data, (row,col)
-    adj = sp.coo_matrix(adj,shape=(COMPANY_NUM,COMPANY_NUM), dtype=np.float32) # 48: total company number
+    adj = sp.coo_matrix(adj,shape=(COMPANY_NUM,COMPANY_NUM), dtype=np.float32) # COMPANY_NUM: total company number
     adj = normalize_adj(adj + sp.eye(adj.shape[0]))
     adj = torch.FloatTensor(np.array(adj.todense()))
     return adj

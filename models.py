@@ -72,7 +72,7 @@ class GAT(nn.Module):
         for i,layer_normp_ in enumerate(self.layer_normp):
             self.add_module('layer_normp{}'.format(i), layer_normp_)
 
-        self.linear_x = [nn.Linear(64,nclass) for _ in range(stock_num)]
+        self.linear_x = [nn.Linear(64,2) for _ in range(stock_num)]
         for i,linear_x_ in enumerate(self.linear_x):
             self.add_module('linear_x{}'.format(i), linear_x_)
 

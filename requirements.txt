@@ -1,5 +1,4 @@
 numpy==1.15.1
 scipy==1.1.0
-torch=1.8.1
-tensorflow-hub
+torch==0.4.1.post2
 networkx

@@ -55,7 +55,7 @@ train_text_path = "./Data/train_text/"
 test_price_path = "./Data/test_price/"
 test_label_path = "./Data/test_label/"
 test_text_path = "./Data/test_text/"
-
+num_samples = len(os.listdir(train_price_path))
 import os
 import time
 import pickle
@@ -65,19 +65,18 @@ from sklearn.metrics import classification_report, matthews_corrcoef, accuracy_s
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
 import matplotlib.pyplot as plt
 
-#cross_entropy = nn.CrossEntropyLoss(weight=torch.tensor([[1.00,1.00]]).cuda())
-cross_entropy = nn.CrossEntropyLoss()
+cross_entropy = nn.CrossEntropyLoss(weight=torch.tensor([[1.00,1.00]]).cuda())
+
 
 
 def train(epoch,TRAIN_SIZE):
+    t = time.time()
     model.train()
-    
+    optimizer.zero_grad()
     i = np.random.randint(TRAIN_SIZE)
     train_text = torch.tensor(np.load(train_text_path+str(i).zfill(10)+'.npy'), dtype=torch.float32).cuda()
     train_price = torch.tensor(np.load(train_price_path+str(i).zfill(10)+'.npy'), dtype = torch.float32).cuda()
     train_label = torch.LongTensor(np.load(train_label_path+str(i).zfill(10)+'.npy')).cuda()
-    
-    optimizer.zero_grad()
     output = model(train_text, train_price, adj)
     loss_train = cross_entropy(output, train_label)
     acc_train = accuracy(output, train_label)
@@ -92,7 +91,6 @@ def test(TEST_SIZE):
     test_loss = []
     li_pred = []
     li_true = []
-    
     with torch.no_grad():
         for i in range(TEST_SIZE):
             test_text = torch.tensor(np.load(test_text_path+str(i).zfill(10)+'.npy'), dtype=torch.float32).cuda()
@@ -109,7 +107,6 @@ def test(TEST_SIZE):
             test_acc.append(acc_test.item())
     iop = f1_score(np.array(li_true).reshape((-1,)),np.array(li_pred).reshape((-1,)), average='micro')
     mat = matthews_corrcoef(np.array(li_true).reshape((-1,)),np.array(li_pred).reshape((-1,)))
-    
     print("Test set results:",
           "loss= {:.4f}".format(np.array(test_loss).mean()),
           "accuracy= {:.4f}".format(np.array(test_acc).mean()),
@@ -118,12 +115,11 @@ def test(TEST_SIZE):
 
 model = GAT(nfeat=64, 
             nhid=args.hidden, 
-            nclass=3, 
+            nclass=2, 
             dropout=args.dropout, 
             nheads=args.nb_heads, 
             alpha=args.alpha,
             stock_num=stock_num)
-
 if args.cuda:
     model.cuda()
     adj = adj.cuda()
@@ -131,12 +127,11 @@ optimizer = optim.Adam(model.parameters(),
                    lr=args.lr, 
                    weight_decay=args.weight_decay)
 
-TRAIN_SIZE = len(os.listdir("./Data/train_label"))
-TEST_SIZE = len(os.listdir("./Data/test_label"))
-
+TRAIN_SIZE = 300
+TEST_SIZE = 90
 for epoch in range(args.epochs):
     train(epoch,TRAIN_SIZE) 
-    if(epoch != 0 and epoch % 100 == 0):
+    if(epoch % 100 == 0):
         torch.save(model.state_dict(), "./weight.pth")
         test(TEST_SIZE)
 print("Optimization Finished!")
